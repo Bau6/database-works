@@ -1,0 +1,32 @@
+WITH AvgPositions AS (
+    SELECT
+        c.class,
+        cl.country,
+        AVG(r.position) AS class_avg_position,
+        COUNT(r.race) AS total_races
+    FROM Results r
+    JOIN Cars c ON r.car = c.name
+    JOIN Classes cl ON c.class = cl.class
+    GROUP BY c.class, cl.country
+),
+MinAvgPosition AS (
+    SELECT MIN(class_avg_position) AS min_avg_position
+    FROM AvgPositions
+),
+FilteredClasses AS (
+    SELECT a.class, a.country, a.class_avg_position, a.total_races
+    FROM AvgPositions a
+    JOIN MinAvgPosition m ON a.class_avg_position = m.min_avg_position
+)
+SELECT
+    r.car AS car_name,
+    c.class AS car_class,
+    AVG(r.position) AS average_position,
+    COUNT(r.race) AS race_count,
+    fc.country AS car_country,
+    fc.total_races
+FROM Results r
+JOIN Cars c ON r.car = c.name
+JOIN FilteredClasses fc ON c.class = fc.class
+GROUP BY r.car, c.class, fc.country, fc.total_races
+ORDER BY r.car;

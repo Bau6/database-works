@@ -1,0 +1,32 @@
+WITH AvgClassPositions AS (
+    SELECT
+        c.class,
+        AVG(r.position) AS class_avg_position,
+        COUNT(DISTINCT c.name) AS car_count
+    FROM Results r
+    JOIN Cars c ON r.car = c.name
+    GROUP BY c.class
+    HAVING COUNT(DISTINCT c.name) >= 2
+),
+AvgCarPositions AS (
+    SELECT
+        r.car AS car_name,
+        c.class AS car_class,
+        cl.country AS car_country,
+        AVG(r.position) AS average_position,
+        COUNT(r.race) AS race_count
+    FROM Results r
+    JOIN Cars c ON r.car = c.name
+    JOIN Classes cl ON c.class = cl.class
+    GROUP BY r.car, c.class, cl.country
+)
+SELECT
+    acp.car_name,
+    acp.car_class,
+    acp.average_position,
+    acp.race_count,
+    acp.car_country
+FROM AvgCarPositions acp
+JOIN AvgClassPositions cp ON acp.car_class = cp.class
+WHERE acp.average_position < cp.class_avg_position
+ORDER BY acp.car_class, acp.average_position;
