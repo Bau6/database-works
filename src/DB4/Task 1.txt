@@ -1,5 +1,4 @@
 WITH RECURSIVE EmployeeHierarchy AS (
-    -- Базовый случай: Иван Иванов (EmployeeID = 1)
     SELECT
         e.EmployeeID,
         e.Name AS EmployeeName,
@@ -13,7 +12,6 @@ WITH RECURSIVE EmployeeHierarchy AS (
 
     UNION ALL
 
-    -- Рекурсивное объединение: поиск подчиненных
     SELECT
         e.EmployeeID,
         e.Name AS EmployeeName,
@@ -32,9 +30,7 @@ SELECT
     eh.ManagerID,
     eh.DepartmentName,
     eh.RoleName,
-    -- Объединение всех проектов через запятую
     COALESCE(GROUP_CONCAT(DISTINCT p.ProjectName ORDER BY p.ProjectName SEPARATOR ', '), NULL) AS ProjectNames,
-    -- Объединение всех задач через запятую
     COALESCE(GROUP_CONCAT(DISTINCT t.TaskName ORDER BY t.TaskName SEPARATOR ', '), NULL) AS TaskNames
 FROM EmployeeHierarchy eh
 LEFT JOIN Projects p ON p.DepartmentID = (
@@ -43,21 +39,3 @@ LEFT JOIN Projects p ON p.DepartmentID = (
 LEFT JOIN Tasks t ON t.AssignedTo = eh.EmployeeID
 GROUP BY eh.EmployeeID, eh.EmployeeName, eh.ManagerID, eh.DepartmentName, eh.RoleName
 ORDER BY eh.EmployeeName;
-
-Как работает запрос:
-Рекурсивный CTE (EmployeeHierarchy):
-
-Базовый случай: включает Ивана Иванова (EmployeeID = 1).
-
-Рекурсивная часть: добавляет всех сотрудников, у которых
-ManagerID соответствует уже найденным сотрудникам.
-
-Главный запрос:
-
-Присоединяет проекты по отделу сотрудника.
-
-Присоединяет задачи, назначенные сотруднику.
-
-Группирует и объединяет названия проектов и задач через GROUP_CONCAT.
-
-Сортирует результат по имени сотрудника.

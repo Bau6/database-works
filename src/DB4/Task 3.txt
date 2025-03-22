@@ -1,5 +1,4 @@
 WITH RECURSIVE Subordinates AS (
-    -- Базовый уровень: выбираем всех менеджеров, у которых есть прямые подчиненные
     SELECT
         e.EmployeeID,
         e.Name AS EmployeeName,
@@ -13,7 +12,6 @@ WITH RECURSIVE Subordinates AS (
 
     UNION ALL
 
-    -- Рекурсивно находим всех подчиненных менеджера (включая их подчиненных)
     SELECT
         e.EmployeeID,
         e.Name AS EmployeeName,
@@ -31,11 +29,9 @@ SELECT
     s.ManagerID,
     d.DepartmentName,
     r.RoleName,
-    -- Группировка проектов в один столбец
     COALESCE(GROUP_CONCAT(DISTINCT p.ProjectName ORDER BY p.ProjectName SEPARATOR ', '), NULL) AS ProjectNames,
-    -- Группировка задач в один столбец
     COALESCE(GROUP_CONCAT(DISTINCT t.TaskName ORDER BY t.TaskName SEPARATOR ', '), NULL) AS TaskNames,
-    COUNT(DISTINCT sub.EmployeeID) AS TotalSubordinates -- Общее количество подчиненных (включая их подчиненных)
+    COUNT(DISTINCT sub.EmployeeID) AS TotalSubordinates
 FROM Subordinates s
 LEFT JOIN Departments d ON s.DepartmentID = d.DepartmentID
 LEFT JOIN Roles r ON s.RoleID = r.RoleID
@@ -45,27 +41,3 @@ LEFT JOIN Employees sub ON sub.ManagerID = s.EmployeeID
 GROUP BY s.EmployeeID, s.EmployeeName, s.ManagerID, d.DepartmentName, r.RoleName
 HAVING TaskNames IS NOT NULL
 ORDER BY s.EmployeeName;
-
-Разбор запроса:
-CTE Subordinates
-
-Находит всех сотрудников с ролью "Менеджер", у которых есть хотя бы один подчиненный.
-
-Рекурсивно добавляет всех подчиненных этих менеджеров (включая вложенные уровни).
-
-Основной запрос
-
-Объединяет данные с таблицами Departments, Roles, Projects и Tasks.
-
-Использует GROUP_CONCAT для объединения названий проектов и задач.
-
-COUNT(DISTINCT sub.EmployeeID) вычисляет общее количество подчиненных
-(включая их подчиненных).
-
-Фильтрация и сортировка
-
-Выбираются только менеджеры с подчиненными.
-
-Сортировка по EmployeeName.
-
-Этот запрос вернет требуемые данные о менеджерах с подчиненными.
