@@ -1,0 +1,52 @@
+SELECT
+    c.name,
+    c.email,
+    c.phone,
+    COUNT(b.ID_booking) AS total_bookings,
+    GROUP_CONCAT(DISTINCT h.name ORDER BY h.name SEPARATOR ', ') AS hotels,
+    ROUND(AVG(DATEDIFF(b.check_out_date, b.check_in_date)), 4) AS avg_stay_length
+FROM Booking b
+JOIN Customer c ON b.ID_customer = c.ID_customer
+JOIN Room r ON b.ID_room = r.ID_room
+JOIN Hotel h ON r.ID_hotel = h.ID_hotel
+GROUP BY c.ID_customer
+HAVING COUNT(DISTINCT h.ID_hotel) > 1 AND COUNT(b.ID_booking) > 2
+ORDER BY total_bookings DESC;
+
+Разбор запроса:
+Объединяем таблицы:
+
+Booking соединяется с Customer, чтобы получить информацию о клиенте.
+
+Booking соединяется с Room, чтобы получить ID отеля.
+
+Room соединяется с Hotel, чтобы получить название отеля.
+
+Агрегируем данные:
+
+COUNT(b.ID_booking) AS total_bookings — считаем общее
+количество бронирований клиента.
+
+GROUP_CONCAT(DISTINCT h.name ORDER BY h.name SEPARATOR ', ') AS
+ hotels — собираем уникальные отели,
+ в которых клиент бронировал номера, в одно поле через запятую.
+
+ROUND(AVG(DATEDIFF(b.check_out_date, b.check_in_date)), 4) AS
+avg_stay_length — вычисляем среднюю длительность пребывания.
+
+Фильтруем клиентов:
+
+HAVING COUNT(DISTINCT h.ID_hotel) > 1 — выбираем только тех
+клиентов, которые бронировали номера в более чем одном отеле.
+
+HAVING COUNT(b.ID_booking) > 2 — выбираем только тех клиентов,
+у которых больше двух бронирований.
+
+Сортируем:
+
+ORDER BY total_bookings DESC — сортируем клиентов по убыванию
+количества бронирований.
+
+Этот запрос вернет список клиентов, которые бронировали номера
+в разных отелях более двух раз, вместе с их контактными данными,
+количеством бронирований, списком отелей и средней длительностью проживания.

@@ -1,0 +1,79 @@
+WITH HotelCategory AS (
+    SELECT
+        h.ID_hotel,
+        h.name AS hotel_name,
+        CASE
+            WHEN AVG(r.price) < 175 THEN 'Дешевый'
+            WHEN AVG(r.price) BETWEEN 175 AND 300 THEN 'Средний'
+            ELSE 'Дорогой'
+        END AS hotel_category
+    FROM Room r
+    JOIN Hotel h ON r.ID_hotel = h.ID_hotel
+    GROUP BY h.ID_hotel
+),
+CustomerPreferences AS (
+    SELECT
+        c.ID_customer,
+        c.name,
+        GROUP_CONCAT(DISTINCT hc.hotel_name ORDER BY hc.hotel_name SEPARATOR ', ') AS visited_hotels,
+        CASE
+            WHEN SUM(hc.hotel_category = 'Дорогой') > 0 THEN 'Дорогой'
+            WHEN SUM(hc.hotel_category = 'Средний') > 0 THEN 'Средний'
+            ELSE 'Дешевый'
+        END AS preferred_hotel_type
+    FROM Booking b
+    JOIN Customer c ON b.ID_customer = c.ID_customer
+    JOIN Room r ON b.ID_room = r.ID_room
+    JOIN HotelCategory hc ON r.ID_hotel = hc.ID_hotel
+    GROUP BY c.ID_customer
+)
+SELECT
+    ID_customer,
+    name,
+    preferred_hotel_type,
+    visited_hotels
+FROM CustomerPreferences
+ORDER BY
+    FIELD(preferred_hotel_type, 'Дешевый', 'Средний', 'Дорогой'),
+    ID_customer;
+
+Разбор запроса:
+Создаем HotelCategory, где определяем категорию отеля на
+основе средней стоимости номеров:
+
+< 175 — «Дешевый».
+
+175–300 — «Средний».
+
+> 300 — «Дорогой».
+
+Создаем CustomerPreferences, где:
+
+Определяем уникальные отели, которые посетил клиент (GROUP_CONCAT).
+
+Определяем предпочитаемый тип отеля:
+
+Если есть хотя бы один «Дорогой» отель, выбираем «Дорогой».
+
+Если есть хотя бы один «Средний» отель, но нет «Дорогих»,
+выбираем «Средний».
+
+Если остались только «Дешевые» отели, выбираем «Дешевый».
+
+Выводим результаты и сортируем:
+
+Сначала клиенты с «Дешевыми» отелями, затем «Средними», затем
+«Дорогими» (FIELD(preferred_hotel_type, ...)).
+
+Внутри каждой категории сортируем по имени.
+
+Этот запрос формирует список клиентов с их предпочтениями по типу отелей
+и отсортированным списком посещенных отелей.
+Что изменилось:
+Вместо сортировки по name, теперь сортировка идет по ID_customer,
+чтобы следовать порядку, который соответствует вашему примеру.
+
+Сортировка сначала по preferred_hotel_type, затем по ID_customer в
+порядке возрастания.
+
+Теперь результаты будут в том же порядке, что и в вашем примере.

@@ -1,0 +1,53 @@
+WITH CustomerBookings AS (
+    SELECT
+        c.ID_customer,
+        c.name,
+        COUNT(b.ID_booking) AS total_bookings,
+        COUNT(DISTINCT h.ID_hotel) AS unique_hotels,
+        SUM(DATEDIFF(b.check_out_date, b.check_in_date) * r.price) AS total_spent
+    FROM Booking b
+    JOIN Customer c ON b.ID_customer = c.ID_customer
+    JOIN Room r ON b.ID_room = r.ID_room
+    JOIN Hotel h ON r.ID_hotel = h.ID_hotel
+    GROUP BY c.ID_customer
+),
+FilteredCustomers AS (
+    SELECT
+        ID_customer,
+        name,
+        total_bookings,
+        unique_hotels,
+        total_spent
+    FROM CustomerBookings
+    WHERE total_bookings > 2 AND unique_hotels > 1 AND total_spent > 500
+)
+SELECT *
+FROM FilteredCustomers
+ORDER BY total_spent ASC;
+
+Разбор запроса:
+Создаем временную таблицу CustomerBookings, в которой агрегируем
+данные о клиентах:
+
+COUNT(b.ID_booking) AS total_bookings — общее количество бронирований.
+
+COUNT(DISTINCT h.ID_hotel) AS unique_hotels — количество уникальных отелей,
+в которых клиент бронировал номера.
+
+SUM(DATEDIFF(b.check_out_date, b.check_in_date) * r.price) AS
+total_spent — общая сумма, потраченная на бронирования, рассчитанная
+как цена за ночь, умноженная на количество ночей.
+
+Фильтруем клиентов (FilteredCustomers):
+
+total_bookings > 2 — у клиента должно быть больше двух бронирований.
+
+unique_hotels > 1 — клиент должен бронировать номера в более чем одном отеле.
+
+total_spent > 500 — клиент должен потратить более 500 долларов.
+
+Выводим результаты и сортируем по total_spent (по возрастанию).
+
+Этот запрос вернет список клиентов, которые сделали более двух
+бронирований в разных отелях и потратили более 500 долларов,
+отсортированных по возрастанию суммы потраченных денег.
